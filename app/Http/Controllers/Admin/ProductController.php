@@ -24,7 +24,7 @@ class ProductController extends Controller
     {
         $products = $this->product->paginate(10);
 
-        return view('admin.products.index',compact('products'));
+        return view('admin.products.index', compact('products'));
     }
 
     /**
@@ -34,9 +34,9 @@ class ProductController extends Controller
      */
     public function create()
     {
-        $stores = Store::all(['id','name']);
+        $stores = Store::all(['id', 'name']);
 
-        return view('admin.products.create',compact('stores'));
+        return view('admin.products.create', compact('stores'));
     }
 
     /**
@@ -77,7 +77,7 @@ class ProductController extends Controller
     {
         $product = $this->product->findOrFail($id);
 
-        return view('admin.products.edit',compact('product'));
+        return view('admin.products.edit', compact('product'));
     }
 
     /**
