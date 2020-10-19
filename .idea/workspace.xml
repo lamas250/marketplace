@@ -141,7 +141,13 @@
     <property name="node.js.selected.package.eslint" value="(autodetect)" />
     <property name="node.js.selected.package.tslint" value="(autodetect)" />
     <property name="nodejs_package_manager_path" value="npm" />
+    <property name="settings.editor.selected.configurable" value="editor.preferences.import" />
     <property name="vue.rearranger.settings.migration" value="true" />
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/app/Models" />
+    </key>
   </component>
   <component name="RunManager">
     <configuration name="phpunit.xml" type="PHPUnitRunConfigurationType" factoryName="PHPUnit">
@@ -157,7 +163,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1603109925305</updated>
-      <workItem from="1603109926443" duration="4126000" />
+      <workItem from="1603109926443" duration="9137000" />
     </task>
     <servers />
   </component>
@@ -173,5 +179,13 @@
       <screen x="1366" y="0" width="1920" height="1080" />
     </state>
     <state x="2068" y="259" width="505" height="568" key="NewPhpClassDialog/0.221.1366.741/1366.0.1920.1080@1366.0.1920.1080" timestamp="1603113269452" />
+    <state x="1815" y="175" width="1022" height="737" key="SettingsEditor" timestamp="1603121646856">
+      <screen x="1366" y="0" width="1920" height="1080" />
+    </state>
+    <state x="1815" y="175" width="1022" height="737" key="SettingsEditor/0.221.1366.741/1366.0.1920.1080@1366.0.1920.1080" timestamp="1603121646856" />
+    <state x="1990" y="245" key="run.anything.popup" timestamp="1603121961631">
+      <screen x="1366" y="0" width="1920" height="1080" />
+    </state>
+    <state x="1990" y="245" key="run.anything.popup/0.221.1366.741/1366.0.1920.1080@1366.0.1920.1080" timestamp="1603121961631" />
   </component>
 </project>
