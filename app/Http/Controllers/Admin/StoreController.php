@@ -2,32 +2,36 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Controllers\Controller;
-use App\Models\Store;
 use App\Models\User;
+use App\Models\Store;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
 
 class StoreController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('user.has.store')->only(['create','store']);
+    }
     public function index()
     {
-        $stores = Store::paginate(10);
+        $stores = Auth::user()->store;
 
         return view('admin.stores.index',compact('stores'));
     }
 
     public function create()
     {
-        $users = User::all(['id','name']);
-
-        return view('admin.stores.create',compact('users'));
+   
+        return view('admin.stores.create');
     }
 
     public function store(Request $request)
     {
         $data = $request->all();
 
-        $user = User::find($data['user']);
+        $user = Auth::user();
         $store = $user->store()->create($data);
 
         flash('Loja criada com Sucesso')->success();

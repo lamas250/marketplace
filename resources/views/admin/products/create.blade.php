@@ -1,4 +1,4 @@
-@extends('layouts.default')
+@extends('layouts.app')
 
 @section('content')
 <h1>Criar Produto</h1>
@@ -31,14 +31,6 @@
         <input type="text" name="slug" class="form-control">
     </div>
 
-    <div class="form-group">
-        <label>Lojas</label>
-        <select name="store" class="form-control">
-            @foreach($stores as $store)
-            <option value="{{$store->id}}">{{$store->name}}</option>
-            @endforeach
-        </select>
-    </div>
     <button  type="submit" class="btn btn-success">Enviar</button>
 </form>
 

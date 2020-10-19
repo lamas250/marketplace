@@ -1,4 +1,4 @@
-@extends('layouts.default')
+@extends('layouts.app')
 
 @section('content')
 <a class="btn btn-success" href="{{route('admin.products.create')}}">Criar Produto</a>
