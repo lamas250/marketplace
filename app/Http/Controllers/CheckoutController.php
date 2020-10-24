@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\UserOrder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Payment\PagSeguro\CreditCard;
 
 class CheckoutController extends Controller
 {
@@ -14,139 +15,69 @@ class CheckoutController extends Controller
             return redirect()->route('login');
         }
 
+        if(!session()->has('cart')){
+            return redirect()->route('home');
+        }
+
         $this->makePagSeguroSession();
 
 
-        $cartItems = array_map(function($line){
+        $cartItems = array_map(function ($line) {
             return $line['amount'] * $line['price'];
         }, session()->get('cart'));
 
         $cartItems = array_sum($cartItems);
         // var_dump(session()->get('pagseguro_session_code'));
 
-        return view('checkout',compact('cartItems'));
+        return view('checkout', compact('cartItems'));
     }
 
     public function proccess(Request $request)
     {
-        $reference = 'XPTO';
-        //Instantiate a new direct payment request, using Credit Card
-        $creditCard = new \PagSeguro\Domains\Requests\DirectPayment\CreditCard();
+        try {
+            $dataPost = $request->all();
+            $user = Auth::user();
+            $cartItems = session()->get('cart');
+            $reference = 'XPTO';
 
-        $creditCard->setReceiverEmail(env('PAGSEGURO_EMAIL'));
+            $creditCardPayment = new CreditCard($cartItems, $user, $dataPost, $reference);
+            $result = $creditCardPayment->doPayment();
 
-        // Set a reference code for this payment request. It is useful to identify this payment
-        // in future notifications.
-        $creditCard->setReference($reference);
+            $userOrder = [
+                'user_id' => Auth::user()->id,
+                'reference' => $reference,
+                'pagseguro_code' => $result->getCode(),
+                'pagseguro_status' => $result->getStatus(),
+                'items' => serialize($cartItems),
+                'store_id' => 30,
+            ];
 
-        // Set the currency
-        $creditCard->setCurrency("BRL");
+            $teste = UserOrder::create($userOrder);
 
-        // Add an item for this payment request
-        $cartItems = session()->get('cart');
-        foreach($cartItems as $item){
-            $creditCard->addItems()->withParameters(
-                $reference,
-                $item['name'],
-                $item['amount'],
-                $item['price'],
-            );
+            session()->forget('cart');
+            session()->forget('pagseguro_session_code');
+
+            return response()->json([
+                'data' => [
+                    'status' => true,
+                    'message' => 'Pedido criado com sucesso!',
+                    'order' => $reference
+                ]
+            ]);
+        } catch (\Exception $e) {
+            $message = env('APP_DEBUG') ? $e->getMessage() : 'Erro ao preocessar pedido!';
+            return response()->json([
+                'data' => [
+                    'status' => false,
+                    'message' => 'Erro ao processar pedido'
+                ]
+            ],401);
         }
-        
-    
-        // Set your customer information.
-        // If you using SANDBOX you must use an email @sandbox.pagseguro.com.br
-        $user = Auth::user();
-        $email = env('PAGSEGURO_ENV') == 'sandbox' ? 'c35894974859074015364@sandbox.pagseguro.com.br' : $user->email;
+    }
 
-        $creditCard->setSender()->setName($request->card_name);
-        $creditCard->setSender()->setEmail($email);
-
-        $creditCard->setSender()->setPhone()->withParameters(
-            11,
-            982073671
-        );
-
-        $creditCard->setSender()->setDocument()->withParameters(
-            'CPF',
-            '31576186016'
-        );
-
-        $creditCard->setSender()->setHash($request->hash);
-
-        $creditCard->setSender()->setIp('127.0.0.0');
-
-        // Set shipping information for this payment request
-        $creditCard->setShipping()->setAddress()->withParameters(
-            'Rua Rubi',
-            '402',
-            'Prado',
-            '01452002',
-            'São Paulo',
-            'SP',
-            'BRA',
-            'apto. 114'
-        );
-
-        //Set billing information for credit card
-        $creditCard->setBilling()->setAddress()->withParameters(
-            'Av. Brig. Faria Lima',
-            '1384',
-            'Jardim Paulistano',
-            '01452002',
-            'São Paulo',
-            'SP',
-            'BRA',
-            'apto. 114'
-        );
-
-        // Set credit card token
-        $creditCard->setToken($request->card_token);
-
-        // Set the installment quantity and value (could be obtained using the Installments
-        // service, that have an example here in \public\getInstallments.php)
-        list($quantity,$installmentAmount) = explode('|',$request->installment);
-        $installmentAmount = number_format($installmentAmount,2,'.','');
-        $creditCard->setInstallment()->withParameters($quantity, $installmentAmount);
-
-        // Set the credit card holder information
-        $creditCard->setHolder()->setBirthdate('01/10/1979');
-        $creditCard->setHolder()->setName($request->card_name); // Equals in Credit Card
-
-        $creditCard->setHolder()->setPhone()->withParameters(
-            11,
-            56273440
-        );
-
-        $creditCard->setHolder()->setDocument()->withParameters(
-            'CPF',
-            '31576186016'
-        );
-
-        // Set the Payment Mode for this payment request
-        $creditCard->setMode('DEFAULT');
-
-        $result = $creditCard->register(
-            \PagSeguro\Configuration\Configure::getAccountCredentials()
-        );
-
-        $userOrder = [
-            'user_id' => Auth::user()->id,
-            'reference' => $reference,
-            'pagseguro_code' => $result->getCode(),
-            'pagseguro_status' => $result->getStatus(),
-            'items' => serialize($cartItems),
-            'store_id' => 30,
-        ];
-
-        $teste = UserOrder::create($userOrder);
-
-        return response()->json([
-            'data' => [
-                'status' => true,
-                'message' => 'Pedido criado com sucesso!'
-            ]
-        ]);
+    public function thanks()
+    {
+        return view('thanks');
     }
 
     private function makePagSeguroSession()
