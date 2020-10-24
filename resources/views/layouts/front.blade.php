@@ -31,7 +31,7 @@
             </li>
         </ul>
 
-    @auth
+    
            <ul class="navbar-nav mr-auto">
                     {{-- <li class="nav-item @if(request()->is('admin/stores*')) active @endif">
                         <a class="nav-link" href="{{route('admin.stores.index')}}">Lojas <span class="sr-only">(current)</span></a>
@@ -54,6 +54,7 @@
                                 @endif
                             </a>
                         </li>
+                        @auth
                         <li class="nav-item">
                             <span class="nav-link">{{auth()->user()->name}}</span>
                         </li>
@@ -65,9 +66,10 @@
                                 @csrf
                             </form>
                         </li>
+                        @endauth
                     </ul>
                 </div>
-        @endauth
+       
 
     </div>
 </nav>
