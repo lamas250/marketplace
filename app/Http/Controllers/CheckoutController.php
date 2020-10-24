@@ -14,13 +14,20 @@ class CheckoutController extends Controller
 
         $this->makePagSeguroSession();
 
+
+        $cartItems = array_map(function($line){
+            return $line['amount'] * $line['price'];
+        }, session()->get('cart'));
+
+        $cartItems = array_sum($cartItems);
         // var_dump(session()->get('pagseguro_session_code'));
 
-        return view('checkout');
+        return view('checkout',compact('cartItems'));
     }
 
     public function proccess(Request $request)
     {
+        $reference = 'XPTO';
         //Instantiate a new direct payment request, using Credit Card
         $creditCard = new \PagSeguro\Domains\Requests\DirectPayment\CreditCard();
 
@@ -28,51 +35,50 @@ class CheckoutController extends Controller
 
         // Set a reference code for this payment request. It is useful to identify this payment
         // in future notifications.
-        $creditCard->setReference("LIBPHP000001");
+        $creditCard->setReference($reference);
 
         // Set the currency
         $creditCard->setCurrency("BRL");
 
         // Add an item for this payment request
-        $creditCard->addItems()->withParameters(
-            '0001',
-            'Notebook prata',
-            2,
-            10.00
-        );
-
-        // Add an item for this payment request
-        $creditCard->addItems()->withParameters(
-            '0002',
-            'Notebook preto',
-            2,
-            5.00
-        );
-
+        $cartItems = session()->get('cart');
+        foreach($cartItems as $item){
+            $creditCard->addItems()->withParameters(
+                $reference,
+                $item['name'],
+                $item['amount'],
+                $item['price'],
+            );
+        }
+        
+    
         // Set your customer information.
         // If you using SANDBOX you must use an email @sandbox.pagseguro.com.br
-        $creditCard->setSender()->setName('João Comprador');
-        $creditCard->setSender()->setEmail('email@comprador.com.br');
+        $user = auth()->user();
+        $email = env('PAGSEGURO_ENV') == 'sandbox' ? 'c35894974859074015364@sandbox.pagseguro.com.br' : $user->email;
+
+        $creditCard->setSender()->setName($request->card_name);
+        $creditCard->setSender()->setEmail($email);
 
         $creditCard->setSender()->setPhone()->withParameters(
             11,
-            56273440
+            982073671
         );
 
         $creditCard->setSender()->setDocument()->withParameters(
             'CPF',
-            'insira um numero de CPF valido'
+            '31576186016'
         );
 
-        $creditCard->setSender()->setHash('d94d002b6998ca9cd69092746518e50aded5a54aef64c4877ccea02573694986');
+        $creditCard->setSender()->setHash($request->hash);
 
         $creditCard->setSender()->setIp('127.0.0.0');
 
         // Set shipping information for this payment request
         $creditCard->setShipping()->setAddress()->withParameters(
-            'Av. Brig. Faria Lima',
-            '1384',
-            'Jardim Paulistano',
+            'Rua Rubi',
+            '402',
+            'Prado',
             '01452002',
             'São Paulo',
             'SP',
@@ -93,15 +99,17 @@ class CheckoutController extends Controller
         );
 
         // Set credit card token
-        $creditCard->setToken('2ed34e61b24d4ea8ae872c66a512525c');
+        $creditCard->setToken($request->card_token);
 
         // Set the installment quantity and value (could be obtained using the Installments
         // service, that have an example here in \public\getInstallments.php)
-        $creditCard->setInstallment()->withParameters(1, '30.00');
+        list($quantity,$installmentAmount) = explode('|',$request->installment);
+        $installmentAmount = number_format($installmentAmount,2,'.','');
+        $creditCard->setInstallment()->withParameters($quantity, $installmentAmount);
 
         // Set the credit card holder information
         $creditCard->setHolder()->setBirthdate('01/10/1979');
-        $creditCard->setHolder()->setName('João Comprador'); // Equals in Credit Card
+        $creditCard->setHolder()->setName($request->card_name); // Equals in Credit Card
 
         $creditCard->setHolder()->setPhone()->withParameters(
             11,
@@ -110,11 +118,32 @@ class CheckoutController extends Controller
 
         $creditCard->setHolder()->setDocument()->withParameters(
             'CPF',
-            'insira um numero de CPF valido'
+            '31576186016'
         );
 
         // Set the Payment Mode for this payment request
         $creditCard->setMode('DEFAULT');
+
+        $result = $creditCard->register(
+            \PagSeguro\Configuration\Configure::getAccountCredentials()
+        );
+
+        $userOrder = [
+            'reference' => $reference,
+            'pagseguro_code' => $result->getCode(),
+            'pagseguro_status' => $result->getStatus(),
+            'items' => serialize($cartItems),
+            'store_id' => 42,
+        ];
+
+        $user->orders()->create($userOrder);
+
+        return response()->json([
+            'data' => [
+                'status' => true,
+                'message' => 'Pedido criado com sucesso!'
+            ]
+        ]);
     }
 
     private function makePagSeguroSession()

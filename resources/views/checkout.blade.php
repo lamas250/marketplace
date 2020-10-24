@@ -13,6 +13,12 @@
         <form action="" method="POST">
             <div class="row">
                 <div class="form-group col-md-12">
+                    <label for="">Nome do Cartão </label>
+                    <input type="text" class="form-control" name="card_name">
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group col-md-12">
                     <label for="">Número do Cartão <span class="brand"></span></label>
                     <input type="text" class="form-control" name="card_number">
                     <input type="hidden" name="card_brand">
@@ -53,6 +59,7 @@
 </script>
 
 <script>
+    let amountTransaction = '{{$cartItems}}';
     let cardNumber = document.querySelector('input[name=card_number]');
     let spanBrand = document.querySelector('span.brand');
 
@@ -64,7 +71,7 @@
                     let imgFlag = `<img src="https://stc.pagseguro.uol.com.br/public/img/payment-methods-flags/68x30/${res.brand.name}.png">`
                     spanBrand.innerHTML = imgFlag;
                     document.querySelector('input[name=card_brand]').value = res.brand.name;
-                    getInstallments(40, res.brand.name);
+                    getInstallments(amountTransaction, res.brand.name);
                 },
                 error: function(err){
                     console.log(err);
@@ -101,6 +108,7 @@
             card_token: token,
             hash: PagSeguroDirectPayment.getSenderHash(),
             installment: document.querySelector('select.select_installments').value,
+            card_name: document.querySelector('input[name=card_name]').value,
             _token: '{{csrf_token()}}',
         }
         $.ajax({
@@ -109,7 +117,7 @@
             data: data,
             dataType: 'json',
             success: function(res){
-                console.log(res);
+                alert(res.data.message)
             }
         });
     }
