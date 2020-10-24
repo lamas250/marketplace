@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\UserOrder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class CheckoutController extends Controller
 {
@@ -54,7 +56,7 @@ class CheckoutController extends Controller
     
         // Set your customer information.
         // If you using SANDBOX you must use an email @sandbox.pagseguro.com.br
-        $user = auth()->user();
+        $user = Auth::user();
         $email = env('PAGSEGURO_ENV') == 'sandbox' ? 'c35894974859074015364@sandbox.pagseguro.com.br' : $user->email;
 
         $creditCard->setSender()->setName($request->card_name);
@@ -129,14 +131,15 @@ class CheckoutController extends Controller
         );
 
         $userOrder = [
+            'user_id' => Auth::user()->id,
             'reference' => $reference,
             'pagseguro_code' => $result->getCode(),
             'pagseguro_status' => $result->getStatus(),
             'items' => serialize($cartItems),
-            'store_id' => 42,
+            'store_id' => 30,
         ];
 
-        $user->orders()->create($userOrder);
+        $teste = UserOrder::create($userOrder);
 
         return response()->json([
             'data' => [
