@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Mail\UserRegisteredEmail;
 use App\Providers\RouteServiceProvider;
-use App\User;
+use App\Models\User;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 
 class RegisterController extends Controller
@@ -60,7 +62,7 @@ class RegisterController extends Controller
      * Create a new user instance after a valid registration.
      *
      * @param  array  $data
-     * @return \App\User
+     * @return \App\Models\User
      */
     protected function create(array $data)
     {
@@ -73,6 +75,9 @@ class RegisterController extends Controller
 
     protected function registered(\Illuminate\Http\Request $request, $user)
     {
+        // dd($user,$request->all());
+        Mail::to($request->email)->send(new UserRegisteredEmail($user));
+
         if(session()->has('cart')){
             return redirect()->route('checkout.index');
         }

@@ -16,7 +16,8 @@
         "laravel/framework": "^7.0",
         "laravel/tinker": "^2.0",
         "laravel/ui": "^2.4",
-        "pagseguro/pagseguro-php-sdk": "^6.0"
+        "pagseguro/pagseguro-php-sdk": "^6.0",
+        "yajra/laravel-datatables-oracle": "^9.11"
     },
     "require-dev": {
         "facade/ignition": "^2.0",

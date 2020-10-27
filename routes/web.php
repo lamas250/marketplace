@@ -47,6 +47,10 @@ Route::group(['middleware' => ['auth']], function(){
         });
     
         Route::resource('products','ProductController');
+
+        Route::post('ajax-crud/update', 'AjaxCrudController@update')->name('ajax-crud.update');
+
+        Route::get('ajax-crud/destroy/{id}', 'AjaxCrudController@destroy');
     });
 
 });
